@@ -1,2 +1,51 @@
 # bonsho
-A zen-inspired Chrome extension to prevent SNS/YouTube overuse with periodic reminders and exportable usage stats.
+
+_Mindful screen time reminders for social media and video sites._
+
+A zen-inspired Chrome extension designed to help you maintain a healthy relationship with social media and video streaming platforms. It provides periodic reminders and usage statistics to encourage mindful consumption.
+
+## Features
+
+- **Mindful Reminders**: Periodic "Moment of Pause" overlays and notifications to break the doom-scrolling cycle.
+- **Usage Tracking**: Automatically tracks time spent on supported platforms.
+- **Usage Dashboard**: View your daily usage statistics directly in the extension popup.
+- **Data Export**: Export your usage data in JSON or CSV format for your own analysis.
+- **Privacy Focused**: All data is stored locally in your browser. No data is sent to external servers.
+- **Customizable**:
+    - Adjust reminder intervals (1-120 minutes).
+    - Toggle specific sites to monitor.
+    - Enable/disable the extension globally.
+
+## Supported Sites(WIP)
+
+- (TODO) YouTube
+- (TODO) Twitter / X
+
+## Installation (Development)
+
+1.  **Clone the repository**
+2.  **Install dependencies**:
+    ```bash
+    pnpm install
+    ```
+3.  **Start Development Server**:
+    ```bash
+    pnpm dev
+    ```
+    This will open a new Chrome instance with the extension loaded.
+
+## Build
+
+To build the extension for production:
+
+```bash
+pnpm build
+```
+
+The output will be in the `.output` directory.
+
+## Tech Stack
+
+- [WXT](https://wxt.dev/) - Web Extension Framework
+- [React](https://react.dev/) - UI Library
+- [TypeScript](https://www.typescriptlang.org/) - Type Safety
