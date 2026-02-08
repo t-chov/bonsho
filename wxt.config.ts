@@ -7,7 +7,16 @@ export default defineConfig({
     name: 'bonsho',
     version: '0.3.0',
     description: 'Mindful screen time reminders',
-    permissions: ['alarms', 'storage', 'tabs', 'activeTab', 'notifications'],
+    permissions: ['alarms', 'storage', 'notifications'],
+    host_permissions: [
+      '*://*.youtube.com/*',
+      '*://*.twitter.com/*',
+      '*://*.x.com/*',
+      '*://*.facebook.com/*',
+      '*://*.instagram.com/*',
+      '*://*.tiktok.com/*',
+      '*://*.reddit.com/*',
+    ],
     icons: { 16: '/icon/16.png', 48: '/icon/48.png', 128: '/icon/128.png' },
   },
 });
