@@ -1,14 +1,9 @@
 import { TARGET_SITES } from '@/utils/constants';
 import { downloadFile, usageToCSV, usageToJSON } from '@/utils/export';
-import {
-  getSettings,
-  getUsage,
-  isSettingsLockedError,
-  saveSettings,
-} from '@/utils/storage';
+import { getSettings, getUsage, isSettingsLockedError, saveSettings } from '@/utils/storage';
 import type { BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
 import { getTodayLocalDateKey, isSettingsLockedForToday } from '@/utils/usage';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * 秒数を時間と分の読みやすい形式に変換
@@ -32,12 +27,12 @@ function App() {
   const [usage, setUsage] = useState<UsageRecord>({});
   const [isLockedToday, setIsLockedToday] = useState(false);
 
-  async function loadPopupData(): Promise<void> {
+  const loadPopupData = useCallback(async (): Promise<void> => {
     const [s, u] = await Promise.all([getSettings(), getUsage()]);
     setSettings(s);
     setUsage(u);
     setIsLockedToday(isSettingsLockedForToday(s, u));
-  }
+  }, []);
 
   async function saveSettingsWithRollback(updated: BonshoSettings): Promise<void> {
     setSettings(updated);
@@ -54,7 +49,7 @@ function App() {
 
   useEffect(() => {
     void loadPopupData();
-  }, []);
+  }, [loadPopupData]);
 
   if (!settings) return null;
 

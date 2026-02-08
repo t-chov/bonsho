@@ -70,10 +70,9 @@ export default defineBackground(() => {
     const usage = await getUsage();
     const isOverDailyLimit = isDailyLimitReached(settings, usage);
 
-    browser.tabs.sendMessage(
-      tab.id,
-      { type: isOverDailyLimit ? 'SHOW_HARD_LIMIT' : 'SHOW_WARNING' } as BonshoMessage,
-    );
+    browser.tabs.sendMessage(tab.id, {
+      type: isOverDailyLimit ? 'SHOW_HARD_LIMIT' : 'SHOW_WARNING',
+    } as BonshoMessage);
 
     browser.notifications.create({
       type: 'basic',

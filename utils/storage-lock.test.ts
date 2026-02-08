@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { browser } from 'wxt/browser';
 import { STORAGE_KEY_SETTINGS, STORAGE_KEY_USAGE, TARGET_SITES } from './constants';
-import {
-  SETTINGS_LOCKED_BY_DAILY_LIMIT,
-  isSettingsLockedToday,
-  saveSettings,
-} from './storage';
+import { SETTINGS_LOCKED_BY_DAILY_LIMIT, isSettingsLockedToday, saveSettings } from './storage';
 import type { BonshoSettings } from './types';
 import { toLocalDateKey } from './usage';
 
