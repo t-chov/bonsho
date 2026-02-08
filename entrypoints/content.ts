@@ -82,10 +82,10 @@ export default defineContentScript({
       const applyPosition = () => {
         if (position === 'right') {
           widget.style.right = '16px';
-          widget.style.left = '';
+          widget.style.left = 'auto';
         } else {
           widget.style.left = '16px';
-          widget.style.right = '';
+          widget.style.right = 'auto';
         }
       };
 
