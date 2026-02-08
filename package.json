@@ -1,6 +1,6 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "bonsho",
+  "description": "Mindful screen time reminders for social media and video sites",
   "private": true,
   "version": "0.0.0",
   "type": "module",
