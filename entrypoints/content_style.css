@@ -1,0 +1,97 @@
+#bonsho-stopwatch-widget {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 15, 20, 0.82);
+  color: #e8d5b7;
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 14px;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+#bonsho-stopwatch-widget .bonsho-stopwatch-elapsed {
+  min-width: 46px;
+  font-variant-numeric: tabular-nums;
+}
+
+#bonsho-stopwatch-widget .bonsho-stopwatch-control {
+  appearance: none;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+#bonsho-stopwatch-widget .bonsho-stopwatch-control:hover {
+  background: rgba(201, 168, 76, 0.15);
+}
+
+#bonsho-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 20, 0.95);
+  color: #e8d5b7;
+  font-family: "Georgia", "Times New Roman", serif;
+  backdrop-filter: blur(8px);
+}
+
+#bonsho-overlay .bonsho-overlay-bell {
+  margin-bottom: 24px;
+  font-size: 64px;
+}
+
+#bonsho-overlay .bonsho-overlay-heading {
+  margin: 0 0 12px;
+  color: #c9a84c;
+  font-size: 32px;
+  font-weight: 400;
+}
+
+#bonsho-overlay .bonsho-overlay-message {
+  max-width: 480px;
+  margin: 0 0 32px;
+  opacity: 0.85;
+  text-align: center;
+  line-height: 1.6;
+  font-size: 18px;
+}
+
+#bonsho-overlay .bonsho-overlay-button {
+  min-height: 44px;
+  padding: 12px 32px;
+  border: 1px solid #c9a84c;
+  border-radius: 4px;
+  background: transparent;
+  color: #c9a84c;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#bonsho-overlay .bonsho-overlay-button:hover {
+  background: rgba(201, 168, 76, 0.15);
+}

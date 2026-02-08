@@ -2,6 +2,7 @@ import { HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
 import { formatStopwatchTime, shouldCountStopwatch } from '@/utils/stopwatch';
 import { getSettings } from '@/utils/storage';
 import type { BonshoMessage, TargetSite } from '@/utils/types';
+import './content_style.css';
 
 /**
  * Content Script のエントリーポイント
@@ -54,54 +55,24 @@ export default defineContentScript({
 
       const widget = document.createElement('div');
       widget.id = 'bonsho-stopwatch-widget';
-      widget.style.cssText = [
-        'position: fixed',
-        'bottom: 16px',
-        'right: 16px',
-        'z-index: 2147483646',
-        'display: flex',
-        'align-items: center',
-        'gap: 8px',
-        'padding: 8px 10px',
-        'border-radius: 10px',
-        'background: rgba(15, 15, 20, 0.82)',
-        'color: #e8d5b7',
-        "font-family: 'Georgia', 'Times New Roman', serif",
-        'font-size: 14px',
-        'line-height: 1',
-        'box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35)',
-        'backdrop-filter: blur(6px)',
-      ].join(';');
 
       const elapsed = document.createElement('span');
+      elapsed.className = 'bonsho-stopwatch-elapsed';
       elapsed.textContent = '00:00';
-      elapsed.style.cssText = ['font-variant-numeric: tabular-nums', 'min-width: 46px'].join(';');
 
       const togglePositionButton = document.createElement('button');
+      togglePositionButton.className = 'bonsho-stopwatch-control';
       togglePositionButton.type = 'button';
       togglePositionButton.textContent = '\u{21C6}';
       togglePositionButton.title = 'Move stopwatch';
       togglePositionButton.ariaLabel = 'Move stopwatch';
 
       const closeButton = document.createElement('button');
+      closeButton.className = 'bonsho-stopwatch-control';
       closeButton.type = 'button';
       closeButton.textContent = '\u{00D7}';
       closeButton.title = 'Hide stopwatch';
       closeButton.ariaLabel = 'Hide stopwatch';
-
-      const controlButtonStyle = [
-        'appearance: none',
-        'border: 1px solid rgba(201, 168, 76, 0.55)',
-        'background: transparent',
-        'color: #c9a84c',
-        'font: inherit',
-        'padding: 2px 6px',
-        'border-radius: 6px',
-        'cursor: pointer',
-        'line-height: 1',
-      ].join(';');
-      togglePositionButton.style.cssText = controlButtonStyle;
-      closeButton.style.cssText = controlButtonStyle;
 
       let position: 'right' | 'left' = 'right';
       let elapsedSeconds = 0;
@@ -158,71 +129,23 @@ export default defineContentScript({
 
       const overlay = document.createElement('div');
       overlay.id = 'bonsho-overlay';
-      overlay.style.cssText = [
-        'position: fixed',
-        'inset: 0',
-        'z-index: 2147483647',
-        'display: flex',
-        'flex-direction: column',
-        'align-items: center',
-        'justify-content: center',
-        'background: rgba(15, 15, 20, 0.95)',
-        'color: #e8d5b7',
-        "font-family: 'Georgia', 'Times New Roman', serif",
-        'backdrop-filter: blur(8px)',
-      ].join(';');
 
       const bell = document.createElement('div');
+      bell.className = 'bonsho-overlay-bell';
       bell.textContent = '\u{1F514}';
-      bell.style.cssText = 'font-size: 64px; margin-bottom: 24px;';
 
       const heading = document.createElement('h1');
+      heading.className = 'bonsho-overlay-heading';
       heading.textContent = 'A moment of pause';
-      heading.style.cssText = [
-        'font-size: 32px',
-        'font-weight: 400',
-        'margin: 0 0 12px',
-        'color: #c9a84c',
-      ].join(';');
 
       const message = document.createElement('p');
+      message.className = 'bonsho-overlay-message';
       message.textContent =
         'You have been scrolling for a while. Is this how you want to spend your time?';
-      message.style.cssText = [
-        'font-size: 18px',
-        'max-width: 480px',
-        'text-align: center',
-        'line-height: 1.6',
-        'margin: 0 0 32px',
-        'opacity: 0.85',
-      ].join(';');
 
       const button = document.createElement('button');
+      button.className = 'bonsho-overlay-button';
       button.textContent = 'I understand';
-      button.style.cssText = [
-        'background: transparent',
-        'border: 1px solid #c9a84c',
-        'color: #c9a84c',
-        'padding: 12px 32px',
-        'min-height: 44px',
-        'display: inline-flex',
-        'align-items: center',
-        'justify-content: center',
-        'font-size: 16px',
-        'font-family: inherit',
-        'line-height: 1',
-        'appearance: none',
-        'vertical-align: middle',
-        'cursor: pointer',
-        'border-radius: 4px',
-        'transition: background 0.2s',
-      ].join(';');
-      button.addEventListener('mouseenter', () => {
-        button.style.background = 'rgba(201, 168, 76, 0.15)';
-      });
-      button.addEventListener('mouseleave', () => {
-        button.style.background = 'transparent';
-      });
       button.addEventListener('click', () => {
         overlay.remove();
       });
