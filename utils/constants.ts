@@ -22,6 +22,7 @@ export const TARGET_SITES: TargetSite[] = [
 export const DEFAULT_SETTINGS: BonshoSettings = {
   enabled: true,
   intervalMinutes: 5,
+  dailyLimitMinutes: 120,
   activeSites: [...TARGET_SITES],
 };
 

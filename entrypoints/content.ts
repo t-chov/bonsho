@@ -1,7 +1,8 @@
 import { HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
 import { formatStopwatchTime, shouldCountStopwatch } from '@/utils/stopwatch';
-import { getSettings } from '@/utils/storage';
-import type { BonshoMessage, TargetSite } from '@/utils/types';
+import { getSettings, getUsage } from '@/utils/storage';
+import type { BonshoMessage, BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
+import { getTodayLocalDateKey, sumUsageSecondsForDateAndSites } from '@/utils/usage';
 import './content_style.css';
 
 /**
@@ -38,6 +39,7 @@ export default defineContentScript({
      */
     if (currentSite) {
       setInterval(() => {
+        if (!shouldCountStopwatch(document.visibilityState, document.hasFocus())) return;
         browser.runtime.sendMessage({
           type: 'HEARTBEAT',
           site: currentSite,
@@ -124,12 +126,14 @@ export default defineContentScript({
      * 全画面の禅テーマオーバーレイを表示し、ユーザーに一時停止を促す
      * @returns {void}
      */
-    function showOverlay(): void {
-      if (document.getElementById('bonsho-overlay')) return;
+    function isOverDailyLimit(settings: BonshoSettings, usage: UsageRecord): boolean {
+      const today = getTodayLocalDateKey();
+      const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
+      return todaySeconds >= settings.dailyLimitMinutes * 60;
+    }
 
-      const leftOperand = Math.floor(Math.random() * 90) + 10;
-      const rightOperand = Math.floor(Math.random() * 9) + 1;
-      const correctAnswer = leftOperand * rightOperand;
+    function showOverlay(mode: 'quiz' | 'hard-limit'): void {
+      if (document.getElementById('bonsho-overlay')) return;
 
       const overlay = document.createElement('div');
       overlay.id = 'bonsho-overlay';
@@ -151,60 +155,76 @@ export default defineContentScript({
 
       const messageLine2 = document.createElement('p');
       messageLine2.className = 'bonsho-overlay-message-line';
-      messageLine2.textContent = 'Is this how you want to spend your time?';
+      messageLine2.textContent =
+        mode === 'hard-limit'
+          ? 'You reached your daily limit. Please come back tomorrow.'
+          : 'Is this how you want to spend your time?';
 
       const challenge = document.createElement('p');
       challenge.className = 'bonsho-overlay-challenge';
-      challenge.textContent = `Solve to continue: ${leftOperand} × ${rightOperand} = ?`;
-
-      const answerInput = document.createElement('input');
-      answerInput.className = 'bonsho-overlay-input';
-      answerInput.type = 'number';
-      answerInput.min = '0';
-      answerInput.step = '1';
-      answerInput.inputMode = 'numeric';
-      answerInput.autocomplete = 'off';
-      answerInput.placeholder = 'Your answer';
-      answerInput.ariaLabel = 'Multiplication answer';
-
-      const error = document.createElement('p');
-      error.className = 'bonsho-overlay-error';
-      error.hidden = true;
-      error.textContent = 'Incorrect answer. Try again.';
-
-      const button = document.createElement('button');
-      button.className = 'bonsho-overlay-button';
-      button.textContent = 'Submit';
-
-      const tryCloseOverlay = () => {
-        const answer = Number.parseInt(answerInput.value.trim(), 10);
-        if (answer === correctAnswer) {
-          overlay.remove();
-          return;
-        }
-        error.hidden = false;
-      };
-
-      button.addEventListener('click', () => {
-        tryCloseOverlay();
-      });
-
-      answerInput.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter') return;
-        event.preventDefault();
-        tryCloseOverlay();
-      });
-
-      answerInput.addEventListener('input', () => {
-        error.hidden = true;
-      });
-
-      requestAnimationFrame(() => {
-        answerInput.focus();
-      });
+      challenge.textContent =
+        mode === 'hard-limit' ? 'Daily limit reached.' : 'Solve to continue: -- × - = ?';
 
       message.append(messageLine1, messageLine2);
-      overlay.append(bell, heading, message, challenge, answerInput, error, button);
+
+      if (mode === 'quiz') {
+        const leftOperand = Math.floor(Math.random() * 90) + 10;
+        const rightOperand = Math.floor(Math.random() * 9) + 1;
+        const correctAnswer = leftOperand * rightOperand;
+
+        challenge.textContent = `Solve to continue: ${leftOperand} × ${rightOperand} = ?`;
+
+        const answerInput = document.createElement('input');
+        answerInput.className = 'bonsho-overlay-input';
+        answerInput.type = 'number';
+        answerInput.min = '0';
+        answerInput.step = '1';
+        answerInput.inputMode = 'numeric';
+        answerInput.autocomplete = 'off';
+        answerInput.placeholder = 'Your answer';
+        answerInput.ariaLabel = 'Multiplication answer';
+
+        const error = document.createElement('p');
+        error.className = 'bonsho-overlay-error';
+        error.hidden = true;
+        error.textContent = 'Incorrect answer. Try again.';
+
+        const button = document.createElement('button');
+        button.className = 'bonsho-overlay-button';
+        button.textContent = 'Submit';
+
+        const tryCloseOverlay = () => {
+          const answer = Number.parseInt(answerInput.value.trim(), 10);
+          if (answer === correctAnswer) {
+            overlay.remove();
+            return;
+          }
+          error.hidden = false;
+        };
+
+        button.addEventListener('click', () => {
+          tryCloseOverlay();
+        });
+
+        answerInput.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter') return;
+          event.preventDefault();
+          tryCloseOverlay();
+        });
+
+        answerInput.addEventListener('input', () => {
+          error.hidden = true;
+        });
+
+        requestAnimationFrame(() => {
+          answerInput.focus();
+        });
+
+        overlay.append(bell, heading, message, challenge, answerInput, error, button);
+      } else {
+        overlay.append(bell, heading, message, challenge);
+      }
+
       document.body.appendChild(overlay);
     }
 
@@ -214,15 +234,20 @@ export default defineContentScript({
      */
     browser.runtime.onMessage.addListener((message: BonshoMessage) => {
       if (message.type === 'SHOW_WARNING') {
-        showOverlay();
+        showOverlay('quiz');
+      }
+      if (message.type === 'SHOW_HARD_LIMIT') {
+        const existingOverlay = document.getElementById('bonsho-overlay');
+        if (existingOverlay) existingOverlay.remove();
+        showOverlay('hard-limit');
       }
     });
 
     (async () => {
       if (!currentSite) return;
-      const settings = await getSettings();
+      const [settings, usage] = await Promise.all([getSettings(), getUsage()]);
       if (!settings.enabled || !settings.activeSites.includes(currentSite)) return;
-      showOverlay();
+      showOverlay(isOverDailyLimit(settings, usage) ? 'hard-limit' : 'quiz');
       showStopwatchWidget();
     })();
   },

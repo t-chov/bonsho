@@ -2,6 +2,7 @@ import { TARGET_SITES } from '@/utils/constants';
 import { downloadFile, usageToCSV, usageToJSON } from '@/utils/export';
 import { getSettings, getUsage, saveSettings } from '@/utils/storage';
 import type { BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
+import { getTodayLocalDateKey } from '@/utils/usage';
 import { useEffect, useState } from 'react';
 
 /**
@@ -35,7 +36,7 @@ function App() {
 
   if (!settings) return null;
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getTodayLocalDateKey();
   let totalToday = 0;
   const siteUsageToday: Record<string, number> = {};
 
@@ -66,6 +67,18 @@ function App() {
   const handleIntervalChange = async (minutes: number) => {
     if (minutes < 1 || minutes > 120) return;
     const updated = { ...settings, intervalMinutes: minutes };
+    setSettings(updated);
+    await saveSettings(updated);
+  };
+
+  /**
+   * 1日の総利用時間上限を変更
+   * @param {number} minutes - 新しい上限（分）
+   * @returns {Promise<void>}
+   */
+  const handleDailyLimitChange = async (minutes: number) => {
+    if (minutes < 1 || minutes > 1440) return;
+    const updated = { ...settings, dailyLimitMinutes: minutes };
     setSettings(updated);
     await saveSettings(updated);
   };
@@ -148,6 +161,20 @@ function App() {
               max={120}
               value={settings.intervalMinutes}
               onChange={(e) => handleIntervalChange(Number.parseInt(e.target.value, 10))}
+            />{' '}
+            min
+          </div>
+        </div>
+        <div className="setting-row">
+          <label htmlFor="daily-limit-input">Daily limit</label>
+          <div>
+            <input
+              id="daily-limit-input"
+              type="number"
+              min={1}
+              max={1440}
+              value={settings.dailyLimitMinutes}
+              onChange={(e) => handleDailyLimitChange(Number.parseInt(e.target.value, 10))}
             />{' '}
             min
           </div>

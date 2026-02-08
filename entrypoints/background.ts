@@ -1,6 +1,7 @@
 import { ALARM_NAME } from '@/utils/constants';
-import { addUsage, getSettings } from '@/utils/storage';
+import { addUsage, getSettings, getUsage } from '@/utils/storage';
 import type { BonshoMessage, TargetSite } from '@/utils/types';
+import { getTodayLocalDateKey, sumUsageSecondsForDateAndSites } from '@/utils/usage';
 
 /**
  * Background Service Worker のエントリーポイント
@@ -65,7 +66,15 @@ export default defineBackground(() => {
     const site = matchesSite(tab.url, settings.activeSites);
     if (!site) return;
 
-    browser.tabs.sendMessage(tab.id, { type: 'SHOW_WARNING' } as BonshoMessage);
+    const usage = await getUsage();
+    const today = getTodayLocalDateKey();
+    const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
+    const isOverDailyLimit = todaySeconds >= settings.dailyLimitMinutes * 60;
+
+    browser.tabs.sendMessage(
+      tab.id,
+      { type: isOverDailyLimit ? 'SHOW_HARD_LIMIT' : 'SHOW_WARNING' } as BonshoMessage,
+    );
 
     browser.notifications.create({
       type: 'basic',
@@ -79,9 +88,29 @@ export default defineBackground(() => {
    * Content Scriptからのメッセージ受信処理
    * HEARTBEATメッセージを受信し、使用時間を記録
    */
-  browser.runtime.onMessage.addListener((message: BonshoMessage, _sender) => {
+  browser.runtime.onMessage.addListener((message: BonshoMessage, sender) => {
     if (message.type === 'HEARTBEAT') {
-      addUsage(message.site, 10);
+      void (async () => {
+        const settings = await getSettings();
+        if (!settings.enabled) return;
+        if (!settings.activeSites.includes(message.site)) return;
+
+        await addUsage(message.site, 10);
+
+        const usage = await getUsage();
+        const today = getTodayLocalDateKey();
+        const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
+        const isOverDailyLimit = todaySeconds >= settings.dailyLimitMinutes * 60;
+        if (!isOverDailyLimit) return;
+
+        const tab = sender.tab;
+        if (!tab?.id || !tab.url) return;
+
+        const site = matchesSite(tab.url, settings.activeSites);
+        if (!site) return;
+
+        browser.tabs.sendMessage(tab.id, { type: 'SHOW_HARD_LIMIT' } as BonshoMessage);
+      })();
     }
   });
 

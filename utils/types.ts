@@ -30,6 +30,8 @@ export interface BonshoSettings {
   enabled: boolean;
   /** リマインダー表示間隔（分） */
   intervalMinutes: number;
+  /** 1日の総利用時間上限（分） */
+  dailyLimitMinutes: number;
   /** 監視対象サイトのリスト */
   activeSites: TargetSite[];
 }
@@ -38,7 +40,7 @@ export interface BonshoSettings {
  * メッセージタイプの型定義
  * @type {string}
  */
-export type BonshoMessageType = 'HEARTBEAT' | 'SHOW_WARNING';
+export type BonshoMessageType = 'HEARTBEAT' | 'SHOW_WARNING' | 'SHOW_HARD_LIMIT';
 
 /**
  * ハートビートメッセージの構造
@@ -60,7 +62,16 @@ export interface ShowWarningMessage {
 }
 
 /**
- * Bonsho拡張機能内で使用される全メッセージの型
- * @type {HeartbeatMessage | ShowWarningMessage}
+ * 日次利用上限超過時のロック表示メッセージ
+ * Background から Content Script へ送信される
+ * @interface
  */
-export type BonshoMessage = HeartbeatMessage | ShowWarningMessage;
+export interface ShowHardLimitMessage {
+  type: 'SHOW_HARD_LIMIT';
+}
+
+/**
+ * Bonsho拡張機能内で使用される全メッセージの型
+ * @type {HeartbeatMessage | ShowWarningMessage | ShowHardLimitMessage}
+ */
+export type BonshoMessage = HeartbeatMessage | ShowWarningMessage | ShowHardLimitMessage;
