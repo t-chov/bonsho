@@ -73,6 +73,10 @@
   font-size: 18px;
 }
 
+#bonsho-overlay .bonsho-overlay-message-line {
+  margin: 0;
+}
+
 #bonsho-overlay .bonsho-overlay-button {
   min-height: 44px;
   padding: 12px 32px;

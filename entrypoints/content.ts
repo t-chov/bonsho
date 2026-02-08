@@ -138,10 +138,16 @@ export default defineContentScript({
       heading.className = 'bonsho-overlay-heading';
       heading.textContent = 'A moment of pause';
 
-      const message = document.createElement('p');
+      const message = document.createElement('div');
       message.className = 'bonsho-overlay-message';
-      message.textContent =
-        'You have been scrolling for a while. Is this how you want to spend your time?';
+
+      const messageLine1 = document.createElement('p');
+      messageLine1.className = 'bonsho-overlay-message-line';
+      messageLine1.textContent = 'You have been scrolling for a while.';
+
+      const messageLine2 = document.createElement('p');
+      messageLine2.className = 'bonsho-overlay-message-line';
+      messageLine2.textContent = 'Is this how you want to spend your time?';
 
       const button = document.createElement('button');
       button.className = 'bonsho-overlay-button';
@@ -150,6 +156,7 @@ export default defineContentScript({
         overlay.remove();
       });
 
+      message.append(messageLine1, messageLine2);
       overlay.append(bell, heading, message, button);
       document.body.appendChild(overlay);
     }
