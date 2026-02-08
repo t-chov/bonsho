@@ -77,6 +77,38 @@
   margin: 0;
 }
 
+#bonsho-overlay .bonsho-overlay-challenge {
+  margin: 0 0 12px;
+  color: #c9a84c;
+  font-size: 22px;
+}
+
+#bonsho-overlay .bonsho-overlay-input {
+  width: 220px;
+  min-height: 44px;
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(201, 168, 76, 0.65);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8d5b7;
+  font-family: inherit;
+  font-size: 20px;
+  text-align: center;
+}
+
+#bonsho-overlay .bonsho-overlay-input:focus {
+  outline: 2px solid rgba(201, 168, 76, 0.65);
+  outline-offset: 2px;
+}
+
+#bonsho-overlay .bonsho-overlay-error {
+  min-height: 20px;
+  margin: 0 0 16px;
+  color: #ff9f9f;
+  font-size: 14px;
+}
+
 #bonsho-overlay .bonsho-overlay-button {
   min-height: 44px;
   padding: 12px 32px;

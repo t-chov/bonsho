@@ -127,6 +127,10 @@ export default defineContentScript({
     function showOverlay(): void {
       if (document.getElementById('bonsho-overlay')) return;
 
+      const leftOperand = Math.floor(Math.random() * 90) + 10;
+      const rightOperand = Math.floor(Math.random() * 9) + 1;
+      const correctAnswer = leftOperand * rightOperand;
+
       const overlay = document.createElement('div');
       overlay.id = 'bonsho-overlay';
 
@@ -149,15 +153,58 @@ export default defineContentScript({
       messageLine2.className = 'bonsho-overlay-message-line';
       messageLine2.textContent = 'Is this how you want to spend your time?';
 
+      const challenge = document.createElement('p');
+      challenge.className = 'bonsho-overlay-challenge';
+      challenge.textContent = `Solve to continue: ${leftOperand} × ${rightOperand} = ?`;
+
+      const answerInput = document.createElement('input');
+      answerInput.className = 'bonsho-overlay-input';
+      answerInput.type = 'number';
+      answerInput.min = '0';
+      answerInput.step = '1';
+      answerInput.inputMode = 'numeric';
+      answerInput.autocomplete = 'off';
+      answerInput.placeholder = 'Your answer';
+      answerInput.ariaLabel = 'Multiplication answer';
+
+      const error = document.createElement('p');
+      error.className = 'bonsho-overlay-error';
+      error.hidden = true;
+      error.textContent = 'Incorrect answer. Try again.';
+
       const button = document.createElement('button');
       button.className = 'bonsho-overlay-button';
-      button.textContent = 'I understand';
+      button.textContent = 'Submit';
+
+      const tryCloseOverlay = () => {
+        const answer = Number.parseInt(answerInput.value.trim(), 10);
+        if (answer === correctAnswer) {
+          overlay.remove();
+          return;
+        }
+        error.hidden = false;
+      };
+
       button.addEventListener('click', () => {
-        overlay.remove();
+        tryCloseOverlay();
+      });
+
+      answerInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        tryCloseOverlay();
+      });
+
+      answerInput.addEventListener('input', () => {
+        error.hidden = true;
+      });
+
+      requestAnimationFrame(() => {
+        answerInput.focus();
       });
 
       message.append(messageLine1, messageLine2);
-      overlay.append(bell, heading, message, button);
+      overlay.append(bell, heading, message, challenge, answerInput, error, button);
       document.body.appendChild(overlay);
     }
 
