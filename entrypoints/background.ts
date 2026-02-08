@@ -1,4 +1,4 @@
-import { ALARM_NAME } from '@/utils/constants';
+import { ALARM_NAME, DEV_TIME_MULTIPLIER } from '@/utils/constants';
 import { addUsage, getSettings, getUsage } from '@/utils/storage';
 import type { BonshoMessage, TargetSite } from '@/utils/types';
 import { getTodayLocalDateKey, sumUsageSecondsForDateAndSites } from '@/utils/usage';
@@ -30,8 +30,9 @@ export default defineBackground(() => {
     const settings = await getSettings();
     await browser.alarms.clear(ALARM_NAME);
     if (settings.enabled) {
+      const periodInMinutes = Math.max(settings.intervalMinutes / DEV_TIME_MULTIPLIER, 0.1);
       browser.alarms.create(ALARM_NAME, {
-        periodInMinutes: settings.intervalMinutes,
+        periodInMinutes,
       });
     }
   }

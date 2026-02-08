@@ -1,4 +1,4 @@
-import { HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
+import { DEV_TIME_MULTIPLIER, HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
 import { formatStopwatchTime, shouldCountStopwatch } from '@/utils/stopwatch';
 import { getSettings, getUsage } from '@/utils/storage';
 import type { BonshoMessage, BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
@@ -95,7 +95,7 @@ export default defineContentScript({
 
       const timerId = window.setInterval(() => {
         if (!shouldCountStopwatch(document.visibilityState, document.hasFocus())) return;
-        elapsedSeconds += 1;
+        elapsedSeconds += DEV_TIME_MULTIPLIER;
         updateElapsedText();
       }, 1000);
 

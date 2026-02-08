@@ -33,11 +33,18 @@ export const DEFAULT_SETTINGS: BonshoSettings = {
 export const ALARM_NAME = 'bonsho-reminder';
 
 /**
+ * 開発モードで時間経過を加速する倍率
+ * `pnpm dev` 経由の起動時のみ 10 倍
+ * @type {number}
+ */
+export const DEV_TIME_MULTIPLIER = import.meta.env.DEV ? 10 : 1;
+
+/**
  * ハートビート送信間隔（ミリ秒）
  * Content Scriptが10秒ごとにBackgroundへ使用状況を通知
  * @type {number}
  */
-export const HEARTBEAT_INTERVAL_MS = 10_000;
+export const HEARTBEAT_INTERVAL_MS = 10_000 / DEV_TIME_MULTIPLIER;
 
 /**
  * ストレージキー: 設定データ
