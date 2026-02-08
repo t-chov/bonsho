@@ -10,6 +10,7 @@ A zen-inspired Chrome extension designed to help you maintain a healthy relation
 
 - **Mindful Reminders**: Periodic "Moment of Pause" overlays and notifications to break the doom-scrolling cycle.
 - **Usage Tracking**: Automatically tracks time spent on supported platforms.
+- **Mini Stopwatch**: Shows elapsed time on monitored pages in the bottom-right/left corner, and can be hidden when it overlaps page UI.
 - **Usage Dashboard**: View your daily usage statistics directly in the extension popup.
 - **Data Export**: Export your usage data in JSON or CSV format for your own analysis.
 - **Privacy Focused**: All data is stored locally in your browser. No data is sent to external servers.

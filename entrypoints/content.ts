@@ -1,4 +1,6 @@
 import { HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
+import { formatStopwatchTime, shouldCountStopwatch } from '@/utils/stopwatch';
+import { getSettings } from '@/utils/storage';
 import type { BonshoMessage, TargetSite } from '@/utils/types';
 
 /**
@@ -40,6 +42,110 @@ export default defineContentScript({
           site: currentSite,
         } as BonshoMessage);
       }, HEARTBEAT_INTERVAL_MS);
+    }
+
+    /**
+     * ページ滞在時間を表示するミニストップウォッチを作成
+     * 右下/左下への移動とページ単位での非表示に対応
+     * @returns {void}
+     */
+    function showStopwatchWidget(): void {
+      if (document.getElementById('bonsho-stopwatch-widget')) return;
+
+      const widget = document.createElement('div');
+      widget.id = 'bonsho-stopwatch-widget';
+      widget.style.cssText = [
+        'position: fixed',
+        'bottom: 16px',
+        'right: 16px',
+        'z-index: 2147483646',
+        'display: flex',
+        'align-items: center',
+        'gap: 8px',
+        'padding: 8px 10px',
+        'border-radius: 10px',
+        'background: rgba(15, 15, 20, 0.82)',
+        'color: #e8d5b7',
+        "font-family: 'Georgia', 'Times New Roman', serif",
+        'font-size: 14px',
+        'line-height: 1',
+        'box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35)',
+        'backdrop-filter: blur(6px)',
+      ].join(';');
+
+      const elapsed = document.createElement('span');
+      elapsed.textContent = '00:00';
+      elapsed.style.cssText = ['font-variant-numeric: tabular-nums', 'min-width: 46px'].join(';');
+
+      const togglePositionButton = document.createElement('button');
+      togglePositionButton.type = 'button';
+      togglePositionButton.textContent = '\u{21C6}';
+      togglePositionButton.title = 'Move stopwatch';
+      togglePositionButton.ariaLabel = 'Move stopwatch';
+
+      const closeButton = document.createElement('button');
+      closeButton.type = 'button';
+      closeButton.textContent = '\u{00D7}';
+      closeButton.title = 'Hide stopwatch';
+      closeButton.ariaLabel = 'Hide stopwatch';
+
+      const controlButtonStyle = [
+        'appearance: none',
+        'border: 1px solid rgba(201, 168, 76, 0.55)',
+        'background: transparent',
+        'color: #c9a84c',
+        'font: inherit',
+        'padding: 2px 6px',
+        'border-radius: 6px',
+        'cursor: pointer',
+        'line-height: 1',
+      ].join(';');
+      togglePositionButton.style.cssText = controlButtonStyle;
+      closeButton.style.cssText = controlButtonStyle;
+
+      let position: 'right' | 'left' = 'right';
+      let elapsedSeconds = 0;
+
+      const applyPosition = () => {
+        if (position === 'right') {
+          widget.style.right = '16px';
+          widget.style.left = '';
+        } else {
+          widget.style.left = '16px';
+          widget.style.right = '';
+        }
+      };
+
+      const updateElapsedText = () => {
+        elapsed.textContent = formatStopwatchTime(elapsedSeconds);
+      };
+
+      const timerId = window.setInterval(() => {
+        if (!shouldCountStopwatch(document.visibilityState, document.hasFocus())) return;
+        elapsedSeconds += 1;
+        updateElapsedText();
+      }, 1000);
+
+      const cleanup = () => {
+        window.clearInterval(timerId);
+        window.removeEventListener('beforeunload', cleanup);
+      };
+
+      window.addEventListener('beforeunload', cleanup, { once: true });
+
+      togglePositionButton.addEventListener('click', () => {
+        position = position === 'right' ? 'left' : 'right';
+        applyPosition();
+      });
+
+      closeButton.addEventListener('click', () => {
+        cleanup();
+        widget.remove();
+      });
+
+      updateElapsedText();
+      widget.append(elapsed, togglePositionButton, closeButton);
+      (document.body ?? document.documentElement).appendChild(widget);
     }
 
     /**
@@ -127,5 +233,12 @@ export default defineContentScript({
         showOverlay();
       }
     });
+
+    (async () => {
+      if (!currentSite) return;
+      const settings = await getSettings();
+      if (!settings.enabled || !settings.activeSites.includes(currentSite)) return;
+      showStopwatchWidget();
+    })();
   },
 });
