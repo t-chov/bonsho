@@ -18,10 +18,35 @@ A zen-inspired Chrome extension designed to help you maintain a healthy relation
     - Toggle specific sites to monitor.
     - Enable/disable the extension globally.
 
-## Supported Sites(WIP)
+## Supported Sites
 
-- (TODO) YouTube
-- (TODO) Twitter / X
+- YouTube (`youtube.com`)
+- Twitter (`twitter.com`)
+- X (`x.com`)
+- Facebook (`facebook.com`)
+- Instagram (`instagram.com`)
+- TikTok (`tiktok.com`)
+- Reddit (`reddit.com`)
+
+## Installation (Users)
+
+1. Open the [Releases](https://github.com/t-chov/bonsho/releases) page.
+2. Download the archive for your browser:
+   - Chromium browsers: `bonsho-<version>-chrome.zip`
+   - Firefox: `bonsho-<version>-firefox.zip`
+
+### Chromium (Chrome / Edge / Brave)
+
+1. Unzip `bonsho-<version>-chrome.zip`.
+2. Open `chrome://extensions` (or `edge://extensions`).
+3. Enable **Developer mode**.
+4. Click **Load unpacked** and select the extracted folder.
+
+### Firefox
+
+1. Unzip `bonsho-<version>-firefox.zip`.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Click **Load Temporary Add-on...** and select `manifest.json` in the extracted folder.
 
 ## Installation (Development)
 

@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  resolve-tag:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.detect.outputs.should_release }}
+      release_tag: ${{ steps.detect.outputs.release_tag }}
+      tag_version: ${{ steps.detect.outputs.tag_version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --force --tags
+
+      - name: Detect semver tag for CI SHA
+        id: detect
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -eu
+
+          mapfile -t semver_tags < <(
+            git tag --points-at "$HEAD_SHA" | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true
+          )
+
+          count="${#semver_tags[@]}"
+          if [ "$count" -eq 0 ]; then
+            echo 'should_release=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$count" -gt 1 ]; then
+            printf 'Multiple semver tags found on %s:\n' "$HEAD_SHA" >&2
+            printf '%s\n' "${semver_tags[@]}" >&2
+            exit 1
+          fi
+
+          release_tag="${semver_tags[0]}"
+          tag_version="${release_tag#v}"
+
+          {
+            echo 'should_release=true'
+            echo "release_tag=$release_tag"
+            echo "tag_version=$tag_version"
+          } >> "$GITHUB_OUTPUT"
+
+  build-and-release:
+    needs:
+      - resolve-tag
+    if: ${{ needs.resolve-tag.outputs.should_release == 'true' }}
+    runs-on: ubuntu-latest
+    concurrency: release-${{ github.event.workflow_run.id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build release archives
+        run: |
+          pnpm zip
+          pnpm zip:firefox
+
+      - name: Validate archive versions
+        env:
+          TAG_VERSION: ${{ needs.resolve-tag.outputs.tag_version }}
+        run: |
+          set -eu
+          CHROME_ARCHIVE=".output/bonsho-${TAG_VERSION}-chrome.zip"
+          FIREFOX_ARCHIVE=".output/bonsho-${TAG_VERSION}-firefox.zip"
+
+          if [ ! -f "$CHROME_ARCHIVE" ]; then
+            echo "Expected archive not found: $CHROME_ARCHIVE" >&2
+            exit 1
+          fi
+
+          if [ ! -f "$FIREFOX_ARCHIVE" ]; then
+            echo "Expected archive not found: $FIREFOX_ARCHIVE" >&2
+            exit 1
+          fi
+
+          {
+            echo "CHROME_ARCHIVE=$CHROME_ARCHIVE"
+            echo "FIREFOX_ARCHIVE=$FIREFOX_ARCHIVE"
+          } >> "$GITHUB_ENV"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-tag.outputs.release_tag }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          generate_release_notes: true
+          overwrite_files: true
+          files: |
+            ${{ env.CHROME_ARCHIVE }}
+            ${{ env.FIREFOX_ARCHIVE }}
