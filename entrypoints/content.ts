@@ -238,6 +238,7 @@ export default defineContentScript({
       if (!currentSite) return;
       const settings = await getSettings();
       if (!settings.enabled || !settings.activeSites.includes(currentSite)) return;
+      showOverlay();
       showStopwatchWidget();
     })();
   },

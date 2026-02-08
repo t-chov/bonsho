@@ -8,7 +8,7 @@ A zen-inspired Chrome extension designed to help you maintain a healthy relation
 
 ## Features
 
-- **Mindful Reminders**: Periodic "Moment of Pause" overlays and notifications to break the doom-scrolling cycle.
+- **Mindful Reminders**: Shows a "Moment of Pause" overlay on monitored page access and periodic reminder notifications/overlays.
 - **Usage Tracking**: Automatically tracks time spent on supported platforms.
 - **Mini Stopwatch**: Shows elapsed time on monitored pages in the bottom-right/left corner, and can be hidden when it overlaps page UI.
 - **Usage Dashboard**: View your daily usage statistics directly in the extension popup.
