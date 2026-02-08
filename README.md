@@ -1,5 +1,7 @@
 # bonsho
 
+[![CI](https://github.com/t-chov/bonsho/actions/workflows/ci.yml/badge.svg)](https://github.com/t-chov/bonsho/actions/workflows/ci.yml)
+
 _Mindful screen time reminders for social media and video sites._
 
 A zen-inspired Chrome extension designed to help you maintain a healthy relationship with social media and video streaming platforms. It provides periodic reminders and usage statistics to encourage mindful consumption.
