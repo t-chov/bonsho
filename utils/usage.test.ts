@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { UsageRecord } from './types';
-import { sumUsageSecondsForDateAndSites, toLocalDateKey } from './usage';
+import type { BonshoSettings, UsageRecord } from './types';
+import { isDailyLimitReached, sumUsageSecondsForDateAndSites, toLocalDateKey } from './usage';
 
 describe('toLocalDateKey', () => {
   it('formats local date as YYYY-MM-DD', () => {
@@ -29,5 +29,35 @@ describe('sumUsageSecondsForDateAndSites', () => {
 
     const total = sumUsageSecondsForDateAndSites(usage, '2026-02-08', ['youtube.com']);
     expect(total).toBe(0);
+  });
+});
+
+describe('isDailyLimitReached', () => {
+  const baseSettings: BonshoSettings = {
+    enabled: true,
+    intervalMinutes: 5,
+    dailyLimitMinutes: 2,
+    activeSites: ['youtube.com', 'x.com'],
+  };
+
+  it('returns false when total is below limit', () => {
+    const usage: UsageRecord = {
+      [`${toLocalDateKey(new Date())}|youtube.com`]: 119,
+    };
+    expect(isDailyLimitReached(baseSettings, usage)).toBe(false);
+  });
+
+  it('returns true when total reaches the limit', () => {
+    const usage: UsageRecord = {
+      [`${toLocalDateKey(new Date())}|youtube.com`]: 120,
+    };
+    expect(isDailyLimitReached(baseSettings, usage)).toBe(true);
+  });
+
+  it('ignores usage from non-active sites', () => {
+    const usage: UsageRecord = {
+      [`${toLocalDateKey(new Date())}|reddit.com`]: 1000,
+    };
+    expect(isDailyLimitReached(baseSettings, usage)).toBe(false);
   });
 });

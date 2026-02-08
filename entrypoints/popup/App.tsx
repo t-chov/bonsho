@@ -1,8 +1,13 @@
 import { TARGET_SITES } from '@/utils/constants';
 import { downloadFile, usageToCSV, usageToJSON } from '@/utils/export';
-import { getSettings, getUsage, saveSettings } from '@/utils/storage';
+import {
+  getSettings,
+  getUsage,
+  isSettingsLockedError,
+  saveSettings,
+} from '@/utils/storage';
 import type { BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
-import { getTodayLocalDateKey } from '@/utils/usage';
+import { getTodayLocalDateKey, isSettingsLockedForToday } from '@/utils/usage';
 import { useEffect, useState } from 'react';
 
 /**
@@ -25,13 +30,30 @@ function formatTime(seconds: number): string {
 function App() {
   const [settings, setSettings] = useState<BonshoSettings | null>(null);
   const [usage, setUsage] = useState<UsageRecord>({});
+  const [isLockedToday, setIsLockedToday] = useState(false);
+
+  async function loadPopupData(): Promise<void> {
+    const [s, u] = await Promise.all([getSettings(), getUsage()]);
+    setSettings(s);
+    setUsage(u);
+    setIsLockedToday(isSettingsLockedForToday(s, u));
+  }
+
+  async function saveSettingsWithRollback(updated: BonshoSettings): Promise<void> {
+    setSettings(updated);
+    try {
+      await saveSettings(updated);
+    } catch (error) {
+      if (isSettingsLockedError(error)) {
+        await loadPopupData();
+        return;
+      }
+      throw error;
+    }
+  }
 
   useEffect(() => {
-    (async () => {
-      const [s, u] = await Promise.all([getSettings(), getUsage()]);
-      setSettings(s);
-      setUsage(u);
-    })();
+    void loadPopupData();
   }, []);
 
   if (!settings) return null;
@@ -54,9 +76,9 @@ function App() {
    * @returns {Promise<void>}
    */
   const handleToggleEnabled = async (enabled: boolean) => {
+    if (isLockedToday) return;
     const updated = { ...settings, enabled };
-    setSettings(updated);
-    await saveSettings(updated);
+    await saveSettingsWithRollback(updated);
   };
 
   /**
@@ -65,10 +87,10 @@ function App() {
    * @returns {Promise<void>}
    */
   const handleIntervalChange = async (minutes: number) => {
+    if (isLockedToday) return;
     if (minutes < 1 || minutes > 120) return;
     const updated = { ...settings, intervalMinutes: minutes };
-    setSettings(updated);
-    await saveSettings(updated);
+    await saveSettingsWithRollback(updated);
   };
 
   /**
@@ -77,10 +99,10 @@ function App() {
    * @returns {Promise<void>}
    */
   const handleDailyLimitChange = async (minutes: number) => {
+    if (isLockedToday) return;
     if (minutes < 1 || minutes > 1440) return;
     const updated = { ...settings, dailyLimitMinutes: minutes };
-    setSettings(updated);
-    await saveSettings(updated);
+    await saveSettingsWithRollback(updated);
   };
 
   /**
@@ -90,6 +112,7 @@ function App() {
    * @returns {Promise<void>}
    */
   const handleSiteToggle = async (site: TargetSite, active: boolean) => {
+    if (isLockedToday) return;
     let activeSites: TargetSite[];
     if (active && !settings.activeSites.includes(site)) {
       activeSites = [...settings.activeSites, site];
@@ -99,8 +122,7 @@ function App() {
       return;
     }
     const updated = { ...settings, activeSites };
-    setSettings(updated);
-    await saveSettings(updated);
+    await saveSettingsWithRollback(updated);
   };
 
   /**
@@ -141,6 +163,11 @@ function App() {
 
       <div className="section">
         <div className="section-title">Settings</div>
+        {isLockedToday && (
+          <p className="settings-locked-message">
+            You reached today's limit. Settings are locked until tomorrow.
+          </p>
+        )}
         <div className="setting-row">
           <label htmlFor="enabled-toggle">Enabled</label>
           <input
@@ -148,6 +175,7 @@ function App() {
             type="checkbox"
             className="toggle"
             checked={settings.enabled}
+            disabled={isLockedToday}
             onChange={(e) => handleToggleEnabled(e.target.checked)}
           />
         </div>
@@ -160,6 +188,7 @@ function App() {
               min={1}
               max={120}
               value={settings.intervalMinutes}
+              disabled={isLockedToday}
               onChange={(e) => handleIntervalChange(Number.parseInt(e.target.value, 10))}
             />{' '}
             min
@@ -174,6 +203,7 @@ function App() {
               min={1}
               max={1440}
               value={settings.dailyLimitMinutes}
+              disabled={isLockedToday}
               onChange={(e) => handleDailyLimitChange(Number.parseInt(e.target.value, 10))}
             />{' '}
             min
@@ -189,6 +219,7 @@ function App() {
               <input
                 type="checkbox"
                 checked={settings.activeSites.includes(site)}
+                disabled={isLockedToday}
                 onChange={(e) => handleSiteToggle(site, e.target.checked)}
               />{' '}
               {site}

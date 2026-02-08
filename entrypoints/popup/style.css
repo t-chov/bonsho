@@ -57,6 +57,13 @@ h1 {
   font-size: 14px;
 }
 
+.settings-locked-message {
+  margin: 0 0 8px;
+  color: #ff9f9f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .toggle {
   position: relative;
   width: 44px;

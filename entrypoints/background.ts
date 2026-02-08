@@ -1,7 +1,7 @@
 import { ALARM_NAME, DEV_TIME_MULTIPLIER } from '@/utils/constants';
 import { addUsage, getSettings, getUsage } from '@/utils/storage';
 import type { BonshoMessage, TargetSite } from '@/utils/types';
-import { getTodayLocalDateKey, sumUsageSecondsForDateAndSites } from '@/utils/usage';
+import { isDailyLimitReached } from '@/utils/usage';
 
 /**
  * Background Service Worker のエントリーポイント
@@ -68,9 +68,7 @@ export default defineBackground(() => {
     if (!site) return;
 
     const usage = await getUsage();
-    const today = getTodayLocalDateKey();
-    const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
-    const isOverDailyLimit = todaySeconds >= settings.dailyLimitMinutes * 60;
+    const isOverDailyLimit = isDailyLimitReached(settings, usage);
 
     browser.tabs.sendMessage(
       tab.id,
@@ -99,9 +97,7 @@ export default defineBackground(() => {
         await addUsage(message.site, 10);
 
         const usage = await getUsage();
-        const today = getTodayLocalDateKey();
-        const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
-        const isOverDailyLimit = todaySeconds >= settings.dailyLimitMinutes * 60;
+        const isOverDailyLimit = isDailyLimitReached(settings, usage);
         if (!isOverDailyLimit) return;
 
         const tab = sender.tab;

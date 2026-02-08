@@ -1,7 +1,19 @@
 import { browser } from 'wxt/browser';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, STORAGE_KEY_USAGE } from './constants';
 import type { BonshoSettings, UsageRecord } from './types';
-import { getTodayLocalDateKey } from './usage';
+import { getTodayLocalDateKey, isSettingsLockedForToday } from './usage';
+
+export const SETTINGS_LOCKED_BY_DAILY_LIMIT = 'SETTINGS_LOCKED_BY_DAILY_LIMIT';
+
+/**
+ * 当日ロックによる設定更新拒否エラーか判定
+ * @param {unknown} error - 判定対象エラー
+ * @returns {boolean} ロックエラーなら true
+ */
+export function isSettingsLockedError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return error.message === SETTINGS_LOCKED_BY_DAILY_LIMIT;
+}
 
 /**
  * デフォルト値を使って設定オブジェクトを正規化
@@ -32,6 +44,10 @@ export async function getSettings(): Promise<BonshoSettings> {
  * @returns {Promise<void>}
  */
 export async function saveSettings(settings: BonshoSettings): Promise<void> {
+  const [currentSettings, usage] = await Promise.all([getSettings(), getUsage()]);
+  if (isSettingsLockedForToday(currentSettings, usage)) {
+    throw new Error(SETTINGS_LOCKED_BY_DAILY_LIMIT);
+  }
   await browser.storage.local.set({ [STORAGE_KEY_SETTINGS]: settings });
 }
 
@@ -42,6 +58,15 @@ export async function saveSettings(settings: BonshoSettings): Promise<void> {
 export async function getUsage(): Promise<UsageRecord> {
   const result = await browser.storage.local.get(STORAGE_KEY_USAGE);
   return (result[STORAGE_KEY_USAGE] as UsageRecord | undefined) ?? ({} as UsageRecord);
+}
+
+/**
+ * 本日分の利用上限到達によって設定がロックされているか判定
+ * @returns {Promise<boolean>} ロック状態
+ */
+export async function isSettingsLockedToday(): Promise<boolean> {
+  const [settings, usage] = await Promise.all([getSettings(), getUsage()]);
+  return isSettingsLockedForToday(settings, usage);
 }
 
 /**

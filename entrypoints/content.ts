@@ -1,8 +1,8 @@
 import { DEV_TIME_MULTIPLIER, HEARTBEAT_INTERVAL_MS, TARGET_SITES } from '@/utils/constants';
 import { formatStopwatchTime, shouldCountStopwatch } from '@/utils/stopwatch';
 import { getSettings, getUsage } from '@/utils/storage';
-import type { BonshoMessage, BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
-import { getTodayLocalDateKey, sumUsageSecondsForDateAndSites } from '@/utils/usage';
+import type { BonshoMessage, TargetSite } from '@/utils/types';
+import { isDailyLimitReached } from '@/utils/usage';
 import './content_style.css';
 
 /**
@@ -126,12 +126,6 @@ export default defineContentScript({
      * 全画面の禅テーマオーバーレイを表示し、ユーザーに一時停止を促す
      * @returns {void}
      */
-    function isOverDailyLimit(settings: BonshoSettings, usage: UsageRecord): boolean {
-      const today = getTodayLocalDateKey();
-      const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
-      return todaySeconds >= settings.dailyLimitMinutes * 60;
-    }
-
     function showOverlay(mode: 'quiz' | 'hard-limit'): void {
       if (document.getElementById('bonsho-overlay')) return;
 
@@ -247,7 +241,7 @@ export default defineContentScript({
       if (!currentSite) return;
       const [settings, usage] = await Promise.all([getSettings(), getUsage()]);
       if (!settings.enabled || !settings.activeSites.includes(currentSite)) return;
-      showOverlay(isOverDailyLimit(settings, usage) ? 'hard-limit' : 'quiz');
+      showOverlay(isDailyLimitReached(settings, usage) ? 'hard-limit' : 'quiz');
       showStopwatchWidget();
     })();
   },

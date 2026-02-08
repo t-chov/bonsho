@@ -1,4 +1,4 @@
-import type { TargetSite, UsageRecord } from './types';
+import type { BonshoSettings, TargetSite, UsageRecord } from './types';
 
 /**
  * 日付をローカルタイムゾーン基準のYYYY-MM-DD文字列に変換
@@ -37,4 +37,26 @@ export function sumUsageSecondsForDateAndSites(
     total += usage[`${dateKey}|${site}`] ?? 0;
   }
   return total;
+}
+
+/**
+ * 当日の利用時間が上限に到達しているか判定
+ * @param {BonshoSettings} settings - 現在の設定
+ * @param {UsageRecord} usage - 使用時間レコード
+ * @returns {boolean} 上限到達時に true
+ */
+export function isDailyLimitReached(settings: BonshoSettings, usage: UsageRecord): boolean {
+  const today = getTodayLocalDateKey();
+  const todaySeconds = sumUsageSecondsForDateAndSites(usage, today, settings.activeSites);
+  return todaySeconds >= settings.dailyLimitMinutes * 60;
+}
+
+/**
+ * 当日中の設定変更ロック状態を判定
+ * @param {BonshoSettings} settings - 現在の設定
+ * @param {UsageRecord} usage - 使用時間レコード
+ * @returns {boolean} 当日ロック中なら true
+ */
+export function isSettingsLockedForToday(settings: BonshoSettings, usage: UsageRecord): boolean {
+  return isDailyLimitReached(settings, usage);
 }
