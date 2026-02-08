@@ -1,8 +1,18 @@
-import type { BonshoMessage, TargetSite } from "@/utils/types";
-import { ALARM_NAME } from "@/utils/constants";
-import { addUsage, getSettings } from "@/utils/storage";
+import { ALARM_NAME } from '@/utils/constants';
+import { addUsage, getSettings } from '@/utils/storage';
+import type { BonshoMessage, TargetSite } from '@/utils/types';
 
+/**
+ * Background Service Worker のエントリーポイント
+ * ハートビート受信、使用時間記録、アラーム管理、警告通知を担当
+ */
 export default defineBackground(() => {
+  /**
+   * URLが指定サイトリストのいずれかを含むかチェック
+   * @param {string} url - チェック対象のURL
+   * @param {TargetSite[]} sites - 監視対象サイトリスト
+   * @returns {TargetSite | null} マッチしたサイト、またはnull
+   */
   function matchesSite(url: string, sites: TargetSite[]): TargetSite | null {
     for (const site of sites) {
       if (url.includes(site)) return site;
@@ -10,6 +20,11 @@ export default defineBackground(() => {
     return null;
   }
 
+  /**
+   * リマインダーアラームの設定または解除
+   * 設定が有効な場合はアラームを作成し、無効な場合は削除する
+   * @returns {Promise<void>}
+   */
   async function setupAlarm(): Promise<void> {
     const settings = await getSettings();
     await browser.alarms.clear(ALARM_NAME);
@@ -20,14 +35,24 @@ export default defineBackground(() => {
     }
   }
 
+  /**
+   * 拡張機能インストール時にアラームを初期化
+   */
   browser.runtime.onInstalled.addListener(() => {
     setupAlarm();
   });
 
+  /**
+   * ブラウザ起動時にアラームを再設定
+   */
   browser.runtime.onStartup.addListener(() => {
     setupAlarm();
   });
 
+  /**
+   * アラーム発火時の処理
+   * アクティブタブが監視対象サイトの場合、警告オーバーレイと通知を表示
+   */
   browser.alarms.onAlarm.addListener(async (alarm) => {
     if (alarm.name !== ALARM_NAME) return;
 
@@ -40,24 +65,32 @@ export default defineBackground(() => {
     const site = matchesSite(tab.url, settings.activeSites);
     if (!site) return;
 
-    browser.tabs.sendMessage(tab.id, { type: "SHOW_WARNING" } as BonshoMessage);
+    browser.tabs.sendMessage(tab.id, { type: 'SHOW_WARNING' } as BonshoMessage);
 
     browser.notifications.create({
-      type: "basic",
-      iconUrl: browser.runtime.getURL("/icon/128.png"),
-      title: "bonsho",
+      type: 'basic',
+      iconUrl: browser.runtime.getURL('/icon/128.png'),
+      title: 'bonsho',
       message: `You've been on ${site} for a while. Take a mindful pause.`,
     });
   });
 
+  /**
+   * Content Scriptからのメッセージ受信処理
+   * HEARTBEATメッセージを受信し、使用時間を記録
+   */
   browser.runtime.onMessage.addListener((message: BonshoMessage, _sender) => {
-    if (message.type === "HEARTBEAT") {
+    if (message.type === 'HEARTBEAT') {
       addUsage(message.site, 10);
     }
   });
 
+  /**
+   * ストレージ変更の監視
+   * 設定が変更された場合、アラームを再設定
+   */
   browser.storage.onChanged.addListener((changes, area) => {
-    if (area === "local" && changes["settings"]) {
+    if (area === 'local' && changes.settings) {
       setupAlarm();
     }
   });

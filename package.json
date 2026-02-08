@@ -13,6 +13,10 @@
     "zip:firefox": "wxt zip -b firefox",
     "test": "vitest run",
     "compile": "tsc --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "check": "biome check . && pnpm compile && pnpm test",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -20,6 +24,7 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@wxt-dev/module-react": "^1.1.5",

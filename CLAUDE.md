@@ -41,6 +41,86 @@ pnpm build           # Production build
 pnpm compile         # TypeScript type check (tsc --noEmit)
 ```
 
+## Coding Style & Tooling
+
+### Linting & Formatting
+
+This project uses **Biome** for linting and formatting:
+
+```bash
+pnpm lint          # Check for linting errors
+pnpm lint:fix      # Fix auto-fixable linting errors
+pnpm format        # Format all files
+pnpm check         # Run full quality check (lint + typecheck + tests)
+```
+
+### Code Style Rules
+
+- **Indentation**: 2 spaces
+- **Line width**: 100 characters maximum
+- **Quotes**: Single quotes for strings
+- **Semicolons**: Always required
+- **Trailing commas**: Always (for cleaner diffs)
+- **Import organization**: Automatic via Biome
+- **Import types**: Use `import type` for type-only imports
+
+### JSDoc Requirements
+
+**All functions, classes, and modules must have JSDoc comments in Japanese.**
+
+#### Required Elements:
+- Function/module purpose description
+- `@param` with type and description for all parameters
+- `@returns` with type and description for return values
+- `@type` or `@typedef` for constants and type definitions
+
+#### Format Examples:
+
+```typescript
+/**
+ * 関数の説明を簡潔に記述
+ * @param {string} site - サイトドメイン
+ * @param {number} seconds - 加算する秒数
+ * @returns {Promise<void>}
+ */
+async function addUsage(site: string, seconds: number): Promise<void> {
+  // ...
+}
+
+/**
+ * リマインダーアラーム名
+ * @type {string}
+ */
+export const ALARM_NAME = "bonsho-reminder";
+```
+
+#### Component Documentation:
+
+```typescript
+/**
+ * コンポーネントの目的と機能を説明
+ * @returns {JSX.Element} レンダリングされるUI要素
+ */
+function MyComponent() {
+  /**
+   * ボタンクリック時の処理
+   * @returns {Promise<void>}
+   */
+  const handleClick = async () => {
+    // ...
+  };
+
+  return <button onClick={handleClick}>Click</button>;
+}
+```
+
+### Development Workflow
+
+1. Write code with JSDoc comments in Japanese
+2. Run `pnpm check` before committing to verify quality
+3. Run `pnpm format` to auto-format code if needed
+4. All touched functions must have updated or added JSDoc
+
 ## Architecture
 
 ### Data Flow

@@ -1,9 +1,14 @@
-import { useState, useEffect } from 'react';
-import type { BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
 import { TARGET_SITES } from '@/utils/constants';
-import { getSettings, saveSettings, getUsage } from '@/utils/storage';
-import { usageToJSON, usageToCSV, downloadFile } from '@/utils/export';
+import { downloadFile, usageToCSV, usageToJSON } from '@/utils/export';
+import { getSettings, getUsage, saveSettings } from '@/utils/storage';
+import type { BonshoSettings, TargetSite, UsageRecord } from '@/utils/types';
+import { useEffect, useState } from 'react';
 
+/**
+ * 秒数を時間と分の読みやすい形式に変換
+ * @param {number} seconds - 変換する秒数
+ * @returns {string} フォーマット済みの時間文字列（例: "2h 30m", "45m"）
+ */
 function formatTime(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -11,6 +16,11 @@ function formatTime(seconds: number): string {
   return `${m}m`;
 }
 
+/**
+ * Bonsho拡張機能のポップアップUIコンポーネント
+ * 本日の使用時間表示、設定変更、データエクスポート機能を提供
+ * @returns {JSX.Element | null} レンダリングされるポップアップUI
+ */
 function App() {
   const [settings, setSettings] = useState<BonshoSettings | null>(null);
   const [usage, setUsage] = useState<UsageRecord>({});
@@ -37,12 +47,22 @@ function App() {
     }
   }
 
+  /**
+   * 機能の有効/無効を切り替え
+   * @param {boolean} enabled - 有効化フラグ
+   * @returns {Promise<void>}
+   */
   const handleToggleEnabled = async (enabled: boolean) => {
     const updated = { ...settings, enabled };
     setSettings(updated);
     await saveSettings(updated);
   };
 
+  /**
+   * リマインダー間隔を変更
+   * @param {number} minutes - 新しい間隔（分）
+   * @returns {Promise<void>}
+   */
   const handleIntervalChange = async (minutes: number) => {
     if (minutes < 1 || minutes > 120) return;
     const updated = { ...settings, intervalMinutes: minutes };
@@ -50,6 +70,12 @@ function App() {
     await saveSettings(updated);
   };
 
+  /**
+   * 監視対象サイトの有効/無効を切り替え
+   * @param {TargetSite} site - 対象サイト
+   * @param {boolean} active - 有効化フラグ
+   * @returns {Promise<void>}
+   */
   const handleSiteToggle = async (site: TargetSite, active: boolean) => {
     let activeSites: TargetSite[];
     if (active && !settings.activeSites.includes(site)) {
@@ -64,11 +90,19 @@ function App() {
     await saveSettings(updated);
   };
 
+  /**
+   * 使用時間データをJSON形式でエクスポート
+   * @returns {Promise<void>}
+   */
   const handleExportJSON = async () => {
     const allUsage = await getUsage();
     downloadFile(usageToJSON(allUsage), 'bonsho-usage.json', 'application/json');
   };
 
+  /**
+   * 使用時間データをCSV形式でエクスポート
+   * @returns {Promise<void>}
+   */
   const handleExportCSV = async () => {
     const allUsage = await getUsage();
     downloadFile(usageToCSV(allUsage), 'bonsho-usage.csv', 'text/csv');
@@ -95,8 +129,9 @@ function App() {
       <div className="section">
         <div className="section-title">Settings</div>
         <div className="setting-row">
-          <label>Enabled</label>
+          <label htmlFor="enabled-toggle">Enabled</label>
           <input
+            id="enabled-toggle"
             type="checkbox"
             className="toggle"
             checked={settings.enabled}
@@ -104,14 +139,15 @@ function App() {
           />
         </div>
         <div className="setting-row">
-          <label>Remind every</label>
+          <label htmlFor="interval-input">Remind every</label>
           <div>
             <input
+              id="interval-input"
               type="number"
               min={1}
               max={120}
               value={settings.intervalMinutes}
-              onChange={(e) => handleIntervalChange(parseInt(e.target.value, 10))}
+              onChange={(e) => handleIntervalChange(Number.parseInt(e.target.value, 10))}
             />{' '}
             min
           </div>
@@ -127,8 +163,8 @@ function App() {
                 type="checkbox"
                 checked={settings.activeSites.includes(site)}
                 onChange={(e) => handleSiteToggle(site, e.target.checked)}
-              />
-              {' '}{site}
+              />{' '}
+              {site}
             </label>
           ))}
         </div>
@@ -137,8 +173,12 @@ function App() {
       <div className="section">
         <div className="section-title">Export Data</div>
         <div className="export-buttons">
-          <button onClick={handleExportJSON}>JSON</button>
-          <button onClick={handleExportCSV}>CSV</button>
+          <button type="button" onClick={handleExportJSON}>
+            JSON
+          </button>
+          <button type="button" onClick={handleExportCSV}>
+            CSV
+          </button>
         </div>
       </div>
     </>
