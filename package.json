@@ -2,7 +2,7 @@
   "name": "bonsho",
   "description": "Mindful screen time reminders for social media and video sites",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",
