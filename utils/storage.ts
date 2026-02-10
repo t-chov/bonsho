@@ -1,5 +1,10 @@
 import { browser } from 'wxt/browser';
-import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, STORAGE_KEY_USAGE } from './constants';
+import {
+  DEFAULT_SETTINGS,
+  STORAGE_KEY_LAST_REMINDER,
+  STORAGE_KEY_SETTINGS,
+  STORAGE_KEY_USAGE,
+} from './constants';
 import type { BonshoSettings, UsageRecord } from './types';
 import { getTodayLocalDateKey, isSettingsLockedForToday } from './usage';
 
@@ -82,4 +87,23 @@ export async function addUsage(site: string, seconds: number): Promise<void> {
   const key = `${today}|${site}`;
   usage[key] = (usage[key] ?? 0) + seconds;
   await browser.storage.local.set({ [STORAGE_KEY_USAGE]: usage });
+}
+
+/**
+ * 前回リマインダー発火時の累計使用秒数をサイトごとに取得
+ * キー形式はusageと同じ "YYYY-MM-DD|site" を使い、日替わりで自動リセットされる
+ * @returns {Promise<Record<string, number>>} サイトキーごとの前回ベースライン
+ */
+export async function getLastReminderUsage(): Promise<Record<string, number>> {
+  const result = await browser.storage.local.get(STORAGE_KEY_LAST_REMINDER);
+  return (result[STORAGE_KEY_LAST_REMINDER] as Record<string, number> | undefined) ?? {};
+}
+
+/**
+ * 前回リマインダー発火時の累計使用秒数を保存
+ * @param {Record<string, number>} data - サイトキーごとのベースラインデータ
+ * @returns {Promise<void>}
+ */
+export async function saveLastReminderUsage(data: Record<string, number>): Promise<void> {
+  await browser.storage.local.set({ [STORAGE_KEY_LAST_REMINDER]: data });
 }

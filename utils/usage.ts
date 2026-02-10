@@ -60,3 +60,36 @@ export function isDailyLimitReached(settings: BonshoSettings, usage: UsageRecord
 export function isSettingsLockedForToday(settings: BonshoSettings, usage: UsageRecord): boolean {
   return isDailyLimitReached(settings, usage);
 }
+
+/**
+ * リマインダー発火判定の結果
+ * @interface
+ */
+export interface CheckReminderResult {
+  /** リマインドを発火すべきか */
+  shouldRemind: boolean;
+  /** 次回判定用の新しいベースライン秒数 */
+  newBaseline: number;
+}
+
+/**
+ * 累計使用時間ベースでリマインダーを発火すべきか判定する
+ * @param {number} currentUsage - 現在の累計使用秒数
+ * @param {number | undefined} usageAtLastReminder - 前回リマインダー発火時の累計秒数（未設定時undefined）
+ * @param {number} intervalMinutes - リマインダー間隔（分）
+ * @returns {CheckReminderResult} 判定結果とベースライン
+ */
+export function checkReminderDue(
+  currentUsage: number,
+  usageAtLastReminder: number | undefined,
+  intervalMinutes: number,
+): CheckReminderResult {
+  if (usageAtLastReminder === undefined) {
+    return { shouldRemind: false, newBaseline: currentUsage };
+  }
+  const thresholdSeconds = intervalMinutes * 60;
+  if (currentUsage - usageAtLastReminder >= thresholdSeconds) {
+    return { shouldRemind: true, newBaseline: currentUsage };
+  }
+  return { shouldRemind: false, newBaseline: usageAtLastReminder };
+}

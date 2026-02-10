@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { BonshoSettings, UsageRecord } from './types';
-import { isDailyLimitReached, sumUsageSecondsForDateAndSites, toLocalDateKey } from './usage';
+import {
+  checkReminderDue,
+  isDailyLimitReached,
+  sumUsageSecondsForDateAndSites,
+  toLocalDateKey,
+} from './usage';
 
 describe('toLocalDateKey', () => {
   it('formats local date as YYYY-MM-DD', () => {
@@ -59,5 +64,49 @@ describe('isDailyLimitReached', () => {
       [`${toLocalDateKey(new Date())}|reddit.com`]: 1000,
     };
     expect(isDailyLimitReached(baseSettings, usage)).toBe(false);
+  });
+});
+
+describe('checkReminderDue', () => {
+  it('初回ハートビート（undefined baseline）ではベースラインを初期化しリマインドしない', () => {
+    const result = checkReminderDue(30, undefined, 3);
+    expect(result.shouldRemind).toBe(false);
+    expect(result.newBaseline).toBe(30);
+  });
+
+  it('SW再起動後（undefined + 大きいcurrentUsage）でもベースラインを再初期化する', () => {
+    const result = checkReminderDue(500, undefined, 3);
+    expect(result.shouldRemind).toBe(false);
+    expect(result.newBaseline).toBe(500);
+  });
+
+  it('閾値に達したらshouldRemind: trueを返す', () => {
+    const result = checkReminderDue(180, 0, 3);
+    expect(result.shouldRemind).toBe(true);
+    expect(result.newBaseline).toBe(180);
+  });
+
+  it('閾値を超過してもshouldRemind: trueを返す', () => {
+    const result = checkReminderDue(200, 0, 3);
+    expect(result.shouldRemind).toBe(true);
+    expect(result.newBaseline).toBe(200);
+  });
+
+  it('閾値未達ではshouldRemind: falseを返しベースラインを維持する', () => {
+    const result = checkReminderDue(100, 0, 3);
+    expect(result.shouldRemind).toBe(false);
+    expect(result.newBaseline).toBe(0);
+  });
+
+  it('連続リマインダーは前回ベースラインからの差分で判定する', () => {
+    // 1回目のリマインダー発火後、ベースラインが180になっている状態
+    const result1 = checkReminderDue(350, 180, 3);
+    expect(result1.shouldRemind).toBe(false);
+    expect(result1.newBaseline).toBe(180);
+
+    // 2回目の閾値に到達
+    const result2 = checkReminderDue(360, 180, 3);
+    expect(result2.shouldRemind).toBe(true);
+    expect(result2.newBaseline).toBe(360);
   });
 });

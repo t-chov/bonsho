@@ -57,3 +57,9 @@ export const STORAGE_KEY_SETTINGS = 'settings';
  * @type {string}
  */
 export const STORAGE_KEY_USAGE = 'usage';
+
+/**
+ * ストレージキー: 前回リマインダー発火時の累計使用秒数
+ * @type {string}
+ */
+export const STORAGE_KEY_LAST_REMINDER = 'lastReminderUsage';
