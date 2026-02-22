@@ -5,9 +5,9 @@ export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
     name: 'bonsho',
-    version: '0.3.1',
+    version: '0.3.2',
     description: 'Mindful screen time reminders',
-    permissions: ['alarms', 'storage', 'notifications'],
+    permissions: ['storage', 'notifications'],
     host_permissions: [
       '*://*.youtube.com/*',
       '*://*.twitter.com/*',
